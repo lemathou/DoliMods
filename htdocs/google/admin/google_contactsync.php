@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2008-2022 Laurent Destailleur  <eldy@users.sourceforge.net>
+/* Copyright (C) 2008-2024 Laurent Destailleur  <eldy@users.sourceforge.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,6 +62,7 @@ $servicename = "contact";
 $_SESSION['servicename'] = $servicename;
 $oauthurl='https://accounts.google.com/o/oauth2/auth';
 $shortscope=getDolGlobalString('OAUTH_GOOGLE-CONTACT_SCOPE');
+
 // Token
 require_once DOL_DOCUMENT_ROOT.'/includes/OAuth/bootstrap.php';
 use OAuth\Common\Storage\DoliStorage;
@@ -74,15 +75,15 @@ try {
 	dol_syslog("Token does not exist yet".$e->getMessage(), LOG_INFO);
 }
 
+
 /*
  * Actions
  */
 
-
 if ($action == 'save') {
 	$error=0;
 
-	$res=dolibarr_set_const($db, 'OAUTH_GOOGLE-CONTACT_SCOPE', "contact", 'chaine', 0, '', $conf->entity);
+	$res=dolibarr_set_const($db, 'OAUTH_GOOGLE-CONTACT_SCOPE', "contact,https://www.googleapis.com/auth/contacts", 'chaine', 0, '', $conf->entity);
 	if (! $res > 0) $error++;
 
 
@@ -105,10 +106,10 @@ if ($action == 'save') {
 			setEventMessage($langs->trans("ErrorLabelsMustDiffers"), 'errors');
 			$error++;
 		}
-		if (! GETPOST('OAUTH_GOOGLE-CONTACT_LOGIN')) {
+		if (! GETPOST('GOOGLE_CONTACT_LOGIN')) {
 			$langs->load("errors");
-			dolibarr_del_const($db, 'OAUTH_GOOGLE-CONTACT_LOGIN', $conf->entity);
-			setEventMessage($langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("GOOGLE_LOGIN")), 'errors');
+			dolibarr_del_const($db, 'GOOGLE_CONTACT_LOGIN', $conf->entity);
+			setEventMessage($langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("GOOGLE_CONTACT_LOGIN")), 'errors');
 		}
 
 		$res=dolibarr_set_const($db, 'OAUTH_GOOGLE-CONTACT_ID', trim(GETPOST("OAUTH_GOOGLE-CONTACT_ID")), 'chaine', 0, '', $conf->entity);
@@ -125,7 +126,7 @@ if ($action == 'save') {
 			if (! $res > 0) $error++;
 			$res=dolibarr_set_const($db, 'GOOGLE_DUPLICATE_INTO_MEMBERS', trim(GETPOST("GOOGLE_DUPLICATE_INTO_MEMBERS")), 'chaine', 0, '', $conf->entity);
 			if (! $res > 0) $error++;
-			$res=dolibarr_set_const($db, 'OAUTH_GOOGLE-CONTACT_LOGIN', trim(GETPOST("OAUTH_GOOGLE-CONTACT_LOGIN")), 'chaine', 0, '', $conf->entity);
+			$res=dolibarr_set_const($db, 'GOOGLE_CONTACT_LOGIN', trim(GETPOST("GOOGLE_CONTACT_LOGIN")), 'chaine', 0, '', $conf->entity);
 			if (! $res > 0) $error++;
 			$res=dolibarr_set_const($db, 'GOOGLE_CONTACT_PASSWORD', trim(GETPOST("GOOGLE_CONTACT_PASSWORD")), 'chaine', 0, '', $conf->entity);
 			if (! $res > 0) $error++;
@@ -170,6 +171,7 @@ if (preg_match('/^test/', $action)) {
 	if ($action == 'testcreatemembers' || $action == 'testallmembers') $object=new Adherent($db);
 
 	if ($action == 'testcreatethirdparties' || $action == 'testallthirdparties') {
+		/** var Societe $object */
 		$result=$object->initAsSpecimen();
 
 		$object->name='Test Synchro Thirdparty & Co (can be deleted)';
@@ -188,17 +190,31 @@ if (preg_match('/^test/', $action)) {
 		$conf->global->SOCIETE_CODECLIENT_ADDON=$savoption;
 	}
 	if ($action == 'testcreatecontacts' || $action == 'testallcontacts') {
+		/** var Contact $object */
 		$result=$object->initAsSpecimen();
 
 		$object->name='Test Synchro Contact & Co (can be deleted)';
 		$object->lastname='Contact (can be deleted)';
 		$object->firstname='Test Synchro';
 		$object->note_public="New 'public' note with special char é and entity eacute &eacute; and html tag <strong>strong</strong>";
+
+		$object->poste = 'CEO';
+		$object->socid = 0;	// change this to a company ID
+		$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."societe ORDER BY rowid ASC LIMIT 1";
+		$resql = $db->query($sql);
+		if ($resql) {
+			$obj = $db->fetch_object($resql);
+			if ($obj) {
+				$object->socid = $obj->rowid;
+			}
+		}
+
 		/*$object->code_client=-1;
 		 $object->code_fournisseur=-1;*/
 		$result=$object->create($user);
 	}
 	if ($action == 'testcreatemembers' || $action == 'testallmembers') {
+		/** var Adherent $object */
 		$result=$object->initAsSpecimen();
 
 		$object->name='Test Synchro Member & Co (can be deleted)';
@@ -212,7 +228,8 @@ if (preg_match('/^test/', $action)) {
 
 	if ($result >= 0) {
 		if ($action == 'testallthirdparties') {
-			$object->oldcopy = dol_clone($object);
+			/** var Societe $object */
+			$object->oldcopy = dol_clone($object, 2);
 
 			$object->name='Test Synchro new Thirdparty (can be deleted)';
 			$object->lastname='Thirdparty (can be deleted)';
@@ -231,10 +248,13 @@ if (preg_match('/^test/', $action)) {
 
 			$conf->global->SOCIETE_CODECLIENT_ADDON=$savoption;
 
-			if ($result > 0) $result=$object->delete($object->id, $user);	// id of thirdparty to delete
+			if ($result > 0) {
+				$result=$object->delete($object->id, $user);	// id of thirdparty to delete
+			}
 		}
 		if ($action == 'testallcontacts') {
-			$object->oldcopy = dol_clone($object);
+			/** var Contact $object */
+			$object->oldcopy = dol_clone($object, 2);
 
 			$object->name='Test Synchro new Contact (can be deleted)';
 			$object->lastname='Contact (can be deleted)';
@@ -244,12 +264,27 @@ if (preg_match('/^test/', $action)) {
 			$object->note_public="New 'public' note with special char é and entity eacute &eacute; and html tag <strong>strong</strong>";
 			$object->street='New street';
 			$object->town='New town';
+
+			$object->poste = 'CEO - CTO';
+			$object->socid = 0;	// Change this to test with a company ID
+			$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."societe ORDER BY rowid ASC LIMIT 2, 1";
+			$resql = $db->query($sql);
+			if ($resql) {
+				$obj = $db->fetch_object($resql);
+				if ($obj) {
+					$object->socid = $obj->rowid;
+				}
+			}
+
 			$result=$object->update($object->id, $user);
 
-			if ($result > 0) $result=$object->delete(0, $user);	// notrigger=0
+			if ($result > 0) {
+				$result=$object->delete(0, $user);	// notrigger=0
+			}
 		}
 		if ($action == 'testallmembers') {
-			$object->oldcopy = dol_clone($object);
+			/** var Adherent $object */
+			$object->oldcopy = dol_clone($object, 2);
 
 			$object->name='Test Synchro new Member (can be deleted)';
 			$object->lastname='Member (can be deleted)';
@@ -261,7 +296,9 @@ if (preg_match('/^test/', $action)) {
 			$object->town='New town';
 			$result=$object->update($user);
 
-			if ($result > 0) $result=$object->delete(0, $user);	// notrigger=0
+			if ($result > 0) {
+				$result=$object->delete(0, $user);	// notrigger=0
+			}
 		}
 	}
 
@@ -351,7 +388,9 @@ if ($action == 'pushallthirdparties') {
 
 			$resultEntries=0;
 
-			if (count($gContacts)) $resultEntries=insertGContactsEntries($gdata, $gContacts, $objectstatic);
+			if (count($gContacts)) {
+				$resultEntries=insertGContactsEntries($gdata, $gContacts, $objectstatic);
+			}
 
 			if (is_numeric($resultEntries) && $resultEntries >= 0) {
 				$mesg = $langs->trans("PushToGoogleSucess", count($gContacts));
@@ -391,7 +430,7 @@ if ($action == 'pushallcontacts') {
 		//var_dump($client); exit;
 
 		// Create client/token object
-		$key_file_location = $conf->google->multidir_output[$conf->entity]."/".$conf->global->GOOGLE_API_SERVICEACCOUNT_P12KEY;
+		$key_file_location = $conf->google->multidir_output[$conf->entity]."/" . getDolGlobalString('GOOGLE_API_SERVICEACCOUNT_P12KEY');
 		$force_do_not_use_session=false; // by default
 		$servicearray=getTokenFromServiceAccount($conf->global->GOOGLE_API_SERVICEACCOUNT_EMAIL, $key_file_location, $force_do_not_use_session, 'web');
 
@@ -427,12 +466,14 @@ if ($action == 'pushallcontacts') {
 				exit;
 			}
 
-			$synclimit = GETPOST('syncto', 'int')?GETPOST('syncto', 'int'):(empty($conf->global->GOOGLE_SYNC_TO_POSITION)?0:$conf->global->GOOGLE_SYNC_TO_POSITION);		// 0 = all
+			$synclimit = (GETPOST('syncto', 'int') ? GETPOST('syncto', 'int') : getDolGlobalInt('GOOGLE_SYNC_TO_POSITION'));		// 0 = all
 			$i=0;
 			$gContacts = array();
 			while (($obj = $db->fetch_object($resql)) && ($i < $synclimit || empty($synclimit))) {
-				if (! empty($conf->global->GOOGLE_SYNC_FROM_POSITION) || GETPOST('syncfrom', 'int')) {
-					if (($i + 1) < (GETPOST('syncfrom', 'int')?GETPOST('syncfrom', 'int'):$conf->global->GOOGLE_SYNC_FROM_POSITION)) continue;
+				if (getDolGlobalInt('GOOGLE_SYNC_FROM_POSITION') || GETPOST('syncfrom', 'int')) {
+					if (($i + 1) < (GETPOST('syncfrom', 'int') ? GETPOST('syncfrom', 'int') : getDolGlobalInt('GOOGLE_SYNC_FROM_POSITION'))) {
+						continue;
+					}
 				}
 
 				try {
@@ -445,7 +486,9 @@ if ($action == 'pushallcontacts') {
 			}
 
 			$resultEntries=0;
-			if (count($gContacts)) $resultEntries=insertGContactsEntries($gdata, $gContacts, $objectstatic);
+			if (count($gContacts)) {
+				$resultEntries = insertGContactsEntries($gdata, $gContacts, $objectstatic);
+			}
 
 			if (is_numeric($resultEntries) && $resultEntries >= 0) {
 				$mesg = $langs->trans("PushToGoogleSucess", count($gContacts));
@@ -456,7 +499,9 @@ if ($action == 'pushallcontacts') {
 
 			if (!$error) {
 				$resultTags=0;
-				if (count($gContacts)) $resultTags=updateGContactGroups($gdata, $gContacts, 'contact');
+				if (count($gContacts)) {
+					$resultTags = updateGContactGroups($gdata, $gContacts, 'contact');
+				}
 
 				if (is_numeric($resultTags) && $resultTags >= 0) {
 					$mesg .= '<br>'.$langs->trans("TagsCreatedSuccess");
@@ -485,7 +530,7 @@ if ($action == 'pushallmembers') {
 		//var_dump($client); exit;
 
 		// Create client/token object
-		$key_file_location = $conf->google->multidir_output[$conf->entity]."/".$conf->global->GOOGLE_API_SERVICEACCOUNT_P12KEY;
+		$key_file_location = $conf->google->multidir_output[$conf->entity]."/" . getDolGlobalString('GOOGLE_API_SERVICEACCOUNT_P12KEY');
 		$force_do_not_use_session=false; // by default
 		$servicearray=getTokenFromServiceAccount($conf->global->GOOGLE_API_SERVICEACCOUNT_EMAIL, $key_file_location, $force_do_not_use_session, 'web');
 
@@ -608,7 +653,7 @@ if ($action == 'deleteallcontacts') {
 	//var_dump($client); exit;
 
 	// Create client/token object
-	$key_file_location = $conf->google->multidir_output[$conf->entity]."/".$conf->global->GOOGLE_API_SERVICEACCOUNT_P12KEY;
+	$key_file_location = $conf->google->multidir_output[$conf->entity]."/" . getDolGlobalString('GOOGLE_API_SERVICEACCOUNT_P12KEY');
 	$force_do_not_use_session=false; // by default
 	$servicearray=getTokenFromServiceAccount($conf->global->GOOGLE_API_SERVICEACCOUNT_EMAIL, $key_file_location, $force_do_not_use_session, 'web');
 
@@ -648,7 +693,7 @@ if ($action == 'deleteallmembers') {
 	//var_dump($client); exit;
 
 	// Create client/token object
-	$key_file_location = $conf->google->multidir_output[$conf->entity]."/".$conf->global->GOOGLE_API_SERVICEACCOUNT_P12KEY;
+	$key_file_location = $conf->google->multidir_output[$conf->entity]."/" . getDolGlobalString('GOOGLE_API_SERVICEACCOUNT_P12KEY');
 	$force_do_not_use_session=false; // by default
 	$servicearray=getTokenFromServiceAccount($conf->global->GOOGLE_API_SERVICEACCOUNT_EMAIL, $key_file_location, $force_do_not_use_session, 'web');
 
@@ -745,7 +790,7 @@ if ($conf->use_javascript_ajax) {
 	print '</script>'."\n";
 }
 
-if ($conf->societe->enabled) {
+if (isModEnabled('societe')) {
 	print $langs->trans("GoogleEnableSyncToThirdparties").' ';
 	$arraytmp=array(
 		'1'=>$langs->trans("Yes"),
@@ -756,8 +801,14 @@ if ($conf->societe->enabled) {
 	print $form->selectarray('GOOGLE_DUPLICATE_INTO_THIRDPARTIES', $arraytmp, $conf->global->GOOGLE_DUPLICATE_INTO_THIRDPARTIES);
 	print '<br>';
 }
-if ($conf->societe->enabled) print $langs->trans("GoogleEnableSyncToContacts").' '.$form->selectyesno("GOOGLE_DUPLICATE_INTO_CONTACTS", isset($_POST["GOOGLE_DUPLICATE_INTO_CONTACTS"])?$_POST["GOOGLE_DUPLICATE_INTO_CONTACTS"]:$conf->global->GOOGLE_DUPLICATE_INTO_CONTACTS, 1).'<br>';
-if ($conf->adherent->enabled) print $langs->trans("GoogleEnableSyncToMembers").' '.$form->selectyesno("GOOGLE_DUPLICATE_INTO_MEMBERS", isset($_POST["GOOGLE_DUPLICATE_INTO_MEMBERS"])?$_POST["GOOGLE_DUPLICATE_INTO_MEMBERS"]:$conf->global->GOOGLE_DUPLICATE_INTO_MEMBERS, 1).'<br>';
+if (isModEnabled('societe')) {
+	print $langs->trans("GoogleEnableSyncToContacts").' ';
+	print $form->selectyesno("GOOGLE_DUPLICATE_INTO_CONTACTS", GETPOSTISSET("GOOGLE_DUPLICATE_INTO_CONTACTS") ? GETPOST('GOOGLE_DUPLICATE_INTO_CONTACTS') : getDolGlobalString('GOOGLE_DUPLICATE_INTO_CONTACTS'), 1, false, 0, 1).'<br>';
+}
+if (isModEnabled('adherent')) {
+	print $langs->trans("GoogleEnableSyncToMembers").' ';
+	print $form->selectyesno("GOOGLE_DUPLICATE_INTO_MEMBERS", GETPOSTISSET("GOOGLE_DUPLICATE_INTO_MEMBERS") ? GETPOST("GOOGLE_DUPLICATE_INTO_MEMBERS") : getDolGlobalString('GOOGLE_DUPLICATE_INTO_MEMBERS'), 1, false, 0, 1).'<br>';
+}
 
 
 print '<div class="syncx">';
@@ -768,12 +819,12 @@ print '<br><br>';
 print '<div class="div-table-responsive-no-min">';
 print '<table class="noborder centpercent">';
 
-print "<tr class=\"liste_titre\">";
+print '<tr class="liste_titre">';
 print '<td class="titlefieldcreate">'.$langs->trans("Parameter")."</td>";
 print "<td>".$langs->trans("Value")."</td>";
 print "</tr>";
 // Label to use for thirdparties
-if ($conf->societe->enabled) {
+if (isModEnabled('societe')) {
 	print '<tr class="oddeven" id="trsyncthirdparties">';
 	print '<td class="fieldrequired">'.$langs->trans("GOOGLE_TAG_PREFIX")."</td>";
 	print "<td>";
@@ -782,7 +833,7 @@ if ($conf->societe->enabled) {
 	print "</tr>";
 }
 // Label to use for contacts
-if ($conf->societe->enabled) {
+if (isModEnabled('societe')) {
 	print '<tr class="oddeven" id="trsynccontacts">';
 	print '<td class="fieldrequired">'.$langs->trans("GOOGLE_TAG_PREFIX_CONTACTS")."</td>";
 	print "<td>";
@@ -791,7 +842,7 @@ if ($conf->societe->enabled) {
 	print "</tr>";
 }
 // Label to use for members
-if ($conf->adherent->enabled) {
+if (isModEnabled('adherent')) {
 	print '<tr class="oddeven" id="trsyncmembers">';
 	print '<td class="fieldrequired">'.$langs->trans("GOOGLE_TAG_PREFIX_MEMBERS")."</td>";
 	print "<td>";
@@ -823,7 +874,7 @@ print "</tr>";
 print '<tr class="oddeven">';
 print '<td class="fieldrequired">'.$langs->trans("GoogleIDContact")."</td>";
 print "<td>";
-print '<input class="flat minwidth300" type="text" name="OAUTH_GOOGLE-CONTACT_LOGIN" autocomplete="off" value="'.getDolGlobalString('OAUTH_GOOGLE-CONTACT_LOGIN').'">';
+print '<input class="flat minwidth300" type="text" name="GOOGLE_CONTACT_LOGIN" autocomplete="off" value="'.getDolGlobalString('GOOGLE_CONTACT_LOGIN').'">';
 print "</td>";
 print '<td>';
 print $langs->trans("Example").": yourlogin@gmail.com, email@mydomain.com<br>";
@@ -862,7 +913,7 @@ print '</tr>';
 		$urlwithroot=$urlwithouturlroot.DOL_URL_ROOT;		// This is to use external domain name found into config file
 		//$urlwithroot=DOL_MAIN_URL_ROOT;					// This is to use same domain name than current
 */
-$redirect_uri=dol_buildpath('/google/oauth2callback.php?', 3);
+$redirect_uri=dol_buildpath('/google/oauth2callback.php', 3);
 $jsallowed=preg_replace('/(https*:\/\/[^\/]+\/).*$/', '\1', $redirect_uri);
 
 $urltocreateidclientoauth = 'https://console.developers.google.com/apis/credentials';
@@ -890,7 +941,9 @@ print '</tr>';
 print '<tr class="oddeven nohover">';
 print '<td>'.$langs->trans("GOOGLE_WEB_TOKEN")."</td>";
 print '<td colspan="2">';
-if (!getDolGlobalString('OAUTH_GOOGLE-CONTACT_LOGIN') ||  !getDolGlobalString('OAUTH_GOOGLE-CONTACT_ID') || !getDolGlobalString('OAUTH_GOOGLE-CONTACT_SECRET')) {
+// Login is in GOOGLE_CONTACT_LOGIN (only in module Google)
+// ID and SECRET are OAUTH_GOOGLE-CONTACT_ID and OAUTH_GOOGLE-CONTACT_SECRET so shared with OAuth module.
+if (!getDolGlobalString('GOOGLE_CONTACT_LOGIN') ||  !getDolGlobalString('OAUTH_GOOGLE-CONTACT_ID') || !getDolGlobalString('OAUTH_GOOGLE-CONTACT_SECRET')) {
 	print $langs->trans("FillAndSaveGoogleAccount");
 } else {
 	// https://developers.google.com/identity/protocols/OAuth2UserAgent
@@ -904,7 +957,7 @@ if (!getDolGlobalString('OAUTH_GOOGLE-CONTACT_LOGIN') ||  !getDolGlobalString('O
 	// $completeoauthurl.='&login_hint='.urlencode($conf->global->GOOGLE_CONTACT_LOGIN);
 	// $completeoauthurl.='&include_granted_scopes=true';
 
-	$redirect_uri	.=	'state=dolibarrtokenrequest-googleadmincontactsync';		// To know we are coming from this page
+	$redirect_uri	.=	'?state=dolibarrtokenrequest-googleadmincontactsync';		// To know we are coming from this page
 	$redirect_uri	.=	'&scope='.urlencode('https://www.googleapis.com/auth/contacts');
 	$redirect_uri	.=	'&shortscope='.urlencode($shortscope);
 	$redirect_uri	.=	'&backtourl='.urlencode(DOL_URL_ROOT.'/custom/google/admin/google_contactsync.php');
@@ -912,17 +965,22 @@ if (!getDolGlobalString('OAUTH_GOOGLE-CONTACT_LOGIN') ||  !getDolGlobalString('O
 
 	$urltodelete = $redirect_uri.'&action=delete';
 	$urltodelete .= '&token='.newToken();
-	if (is_object($tokenobj)) {
+	if (!empty($tokenobj) && is_object($tokenobj)) {
 		$token_creation_entity = '';
-		$token_date_last_update = $_SESSION['google_web_token_'.$conf->entity]['created'] ?? $storage->date_modification;
+		$token_date_last_update = $storage->date_modification;
 		$token_date_expire = $tokenobj->getEndOfLife();
-		$token = $_SESSION['google_web_token_'.$conf->entity]['access_token'] ?? $tokenobj->getAccessToken();
+		$token_database = $tokenobj->getAccessToken();
+		$token = $_SESSION['google_web_token_'.$conf->entity]['access_token'] ?? $token_database;
 		$token_entity = $conf->entity;
+		print 'Saved token: '.showValueWithClipboardCPButton($token_database, 0, dol_trunc($token_database, 40)).'<br>'."\n";
 		print $langs->trans("DateCreation").'='.dol_print_date($token_date_last_update, 'dayhour').' - '.$langs->trans("Entity").'='.(int)$token_entity;
 		print ' - '.$langs->trans("DateExpiration").'='.dol_print_date($token_date_expire, 'dayhour').' - '.$langs->trans("Entity").'='.$token_entity;
-
 		print '<br>';
-		print 'Current session token:<br>';
+		print 'Current token in session';
+		if (!empty($_SESSION['google_web_token_'.$conf->entity]['created'])) {
+			print ' since '.dol_print_date($_SESSION['google_web_token_'.$conf->entity]['created'], 'dayhour');
+		}
+		print ':<br>';
 		if (! empty($_SESSION['google_web_token_'.$conf->entity])) {
 			//print '<div class="quatrevingtpercent" style="max-width: 800px; overflow: scroll; border: 1px solid #aaa;">';
 			if (is_array($_SESSION['google_web_token_'.$conf->entity]) && key_exists('access_token', $_SESSION['google_web_token_'.$conf->entity])) {
@@ -975,16 +1033,16 @@ print '<br><br>';
 
 
 // Thirdparties
-if ($conf->societe->enabled) {
-	if (! empty($conf->global->GOOGLE_DUPLICATE_INTO_THIRDPARTIES) && is_object($tokenobj)) {
+if (isModEnabled('societe')) {
+	if (!empty($conf->global->GOOGLE_DUPLICATE_INTO_THIRDPARTIES) && !empty($tokenobj) && is_object($tokenobj)) {
 		print '<div class="syncthirdparties">';
 		print '<hr><br>';
 		print img_picto('', 'company', 'class="pictofixedwidth"').' '.$langs->trans("Tool").' '.$langs->trans("ThirdParties").'<br><br>';
 		print '<div class="tabsActions syncthirdparties">';
 		if (empty($conf->global->GOOGLE_CONTACT_LOGIN)) {
-			print '<div class="inline-block divButAction"><font class="butActionRefused small reposition" href="#">'.$langs->trans("TestCreateUpdateDelete")."</font></a></div>";
+			print '<div class="inline-block divButAction"><font class="butActionRefused small reposition" href="#" title="'.$langs->trans("ErrorFieldRequired", $langs->transnoentities("GoogleIDContact")).'">'.$langs->trans("TestCreateUpdateDelete")."</font></a></div>";
 
-			print '<div class="inline-block divButAction"><font class="butActionRefused small reposition" href="#">'.$langs->trans("TestCreate")."</font></a></div>";
+			print '<div class="inline-block divButAction"><font class="butActionRefused small reposition" href="#" title="'.$langs->trans("ErrorFieldRequired", $langs->transnoentities("GoogleIDContact")).'">'.$langs->trans("TestCreate")."</font></a></div>";
 		} else {
 			print '<div class="inline-block divButAction"><a class="butAction small reposition" href="'.$_SERVER['PHP_SELF'].'?action=testallthirdparties&token='.newToken().'">'.$langs->trans("TestCreateUpdateDelete")."</a></div>";
 
@@ -1028,17 +1086,17 @@ if ($conf->societe->enabled) {
 	}
 }
 
-	// Contacts
-if ($conf->societe->enabled) {
+// Contacts
+if (isModEnabled('societe')) {
 	if (! empty($conf->global->GOOGLE_DUPLICATE_INTO_CONTACTS) && is_object($tokenobj)) {
 		print '<div class="synccontacts">';
 		print '<hr><br>';
 		print img_picto('', 'contact', 'class="pictofixedwidth"').' '.$langs->trans("Tool").' '.$langs->trans("Contacts").'<br><br>';
 		print '<div class="tabsActions synccontacts">';
 		if (empty($conf->global->GOOGLE_CONTACT_LOGIN)) {
-			print '<div class="inline-block divButAction"><font class="butActionRefused small reposition" href="#">'.$langs->trans("TestCreateUpdateDelete")."</font></a></div>";
+			print '<div class="inline-block divButAction"><font class="butActionRefused small reposition" href="#" title="'.$langs->trans("ErrorFieldRequired", $langs->transnoentities("GoogleIDContact")).'">'.$langs->trans("TestCreateUpdateDelete")."</font></a></div>";
 
-			print '<div class="inline-block divButAction"><font class="butActionRefused small reposition" href="#">'.$langs->trans("TestCreate")."</font></a></div>";
+			print '<div class="inline-block divButAction"><font class="butActionRefused small reposition" href="#" title="'.$langs->trans("ErrorFieldRequired", $langs->transnoentities("GoogleIDContact")).'">'.$langs->trans("TestCreate")."</font></a></div>";
 		} else {
 			print '<div class="inline-block divButAction"><a class="butAction small reposition" href="'.$_SERVER['PHP_SELF'].'?action=testallcontacts&token='.newToken().'">'.$langs->trans("TestCreateUpdateDelete")."</a></div>";
 
@@ -1081,16 +1139,16 @@ if ($conf->societe->enabled) {
 }
 
 // Members
-if ($conf->adherent->enabled) {
+if (isModEnabled('adherent')) {
 	if (! empty($conf->global->GOOGLE_DUPLICATE_INTO_MEMBERS) && is_object($tokenobj)) {
 		print '<div class="syncmembers">';
 		print '<hr><br>';
 		print img_picto('', 'member', 'class="pictofixedwidth"').' '.$langs->trans("Tool").' '.$langs->trans("Members").'<br><br>';
 		print '<div class="tabsActions syncmembers">';
 		if (empty($conf->global->GOOGLE_CONTACT_LOGIN)) {
-			print '<div class="inline-block divButAction"><font class="butActionRefused small reposition" href="#">'.$langs->trans("TestCreateUpdateDelete")."</font></a></div>";
+			print '<div class="inline-block divButAction"><font class="butActionRefused small reposition" href="#" title="'.$langs->trans("ErrorFieldRequired", $langs->transnoentities("GoogleIDContact")).'">'.$langs->trans("TestCreateUpdateDelete")."</font></a></div>";
 
-			print '<div class="inline-block divButAction"><font class="butActionRefused small reposition" href="#">'.$langs->trans("TestCreate")."</font></a></div>";
+			print '<div class="inline-block divButAction"><font class="butActionRefused small reposition" href="#" title="'.$langs->trans("ErrorFieldRequired", $langs->transnoentities("GoogleIDContact")).'">'.$langs->trans("TestCreate")."</font></a></div>";
 		} else {
 			print '<div class="inline-block divButAction"><a class="butAction small reposition" href="'.$_SERVER['PHP_SELF'].'?action=testallmembers&token='.newToken().'">'.$langs->trans("TestCreateUpdateDelete")."</a></div>";
 
