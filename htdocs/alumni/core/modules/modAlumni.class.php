@@ -55,7 +55,7 @@ class modAlumni extends DolibarrModules
 		// Module label (no space allowed), used if translation string 'ModuleAlumniName' not found (Alumni is name of module).
 		$this->name = preg_replace('/^mod/i', '', get_class($this));
 		// Module description, used if translation string 'ModuleAlumniDesc' not found (Alumni is name of module).
-		$this->description = 'fa-globe-americashhh';
+		$this->description = 'AlumniDescription';
 		// Used only if file README.md and README-LL.md not found.
 		$this->descriptionlong = "AlumniDescription";
 		// Author
@@ -101,11 +101,10 @@ class modAlumni extends DolibarrModules
 			),
 			// Set here all hooks context managed by module. To find available hook context, make a "grep -r '>initHooks(' *" on source code. You can also set hook context to 'all'
 			'hooks' => array(
-				//   'data' => array(
-				//       'hookcontext1',
-				//       'hookcontext2',
-				//   ),
-				//   'entity' => '0',
+				'data' => array(
+					'customreport',
+				),
+				'entity' => '0'
 			),
 			// Set this to 1 if features of module are opened to external users
 			'moduleforexternal' => 0,
@@ -119,7 +118,7 @@ class modAlumni extends DolibarrModules
 		// A condition to hide module
 		$this->hidden = false;
 		// List of module class names that must be enabled if this module is enabled. Example: array('always'=>array('modModuleToEnable1','modModuleToEnable2'), 'FR'=>array('modModuleToEnableFR')...)
-		$this->depends = array('opensurvey', 'website', 'mailing');
+		$this->depends = array('modOpenSurvey', 'modWebsite', 'modMailing');
 		// List of module class names to disable if this one is disabled. Example: array('modModuleToDisable1', ...)
 		$this->requiredby = array();
 		// List of module class names this module is in conflict with. Example: array('modModuleToDisable1', ...)
@@ -302,6 +301,22 @@ class modAlumni extends DolibarrModules
 			 'user' => 2,
 		);
 		/* END LEFTMENU SURVEY */
+		/* LEFTMENU NEW SURVEY */
+		$this->menu[$r++]=array(
+			'fk_menu' => 'fk_mainmenu=alumni,fk_leftmenu=survey',
+			'type' => 'left',
+			'titre' => 'NewVoteEntry',
+			'mainmenu' => 'alumni',
+			'leftmenu' => 'survey_list_new',
+			'url' => '/alumni/survey_card.php?action=create',
+			'langs' => 'alumni@alumni',
+			'position' => 1003 + $r,
+			'enabled' => 'isModEnabled(\'alumni\')',
+			'perms' => '$user->hasRight(\'alumni\', \'survey\', \'write\')',
+			'target' => '',
+			'user' => 2,
+		);
+		/* END LEFTMENU NEW SURVEY */
 		/* LEFTMENU LIST SURVEYS */
 		$this->menu[$r++]=array(
 			 'fk_menu' => 'fk_mainmenu=alumni,fk_leftmenu=survey',
@@ -318,32 +333,31 @@ class modAlumni extends DolibarrModules
 			 'user' => 2,
 		);
 		/* END LEFTMENU LIST SURVEYS */
-		/* LEFTMENU NEW SURVEY */
-		$this->menu[$r++]=array(
-			 'fk_menu' => 'fk_mainmenu=alumni,fk_leftmenu=survey',
-			 'type' => 'left',
-			 'titre' => 'New entry',
-			 'mainmenu' => 'alumni',
-			 'leftmenu' => 'survey_list_new',
-			 'url' => '/alumni/survey_card.php?action=create',
-			 'langs' => 'alumni@alumni',
-			 'position' => 1003 + $r,
-			 'enabled' => 'isModEnabled(\'alumni\')',
-			 'perms' => '$user->hasRight(\'alumni\', \'survey\', \'write\')',
-			 'target' => '',
-			 'user' => 2,
-		);
-		/* END LEFTMENU NEW SURVEY */
 
+		$this->menu[$r++]=array(
+			'fk_menu' => 'fk_mainmenu=alumni,fk_leftmenu=survey',
+			'type' => 'left',
+			'titre' => 'CustomReports',
+			'mainmenu' => 'alumni',
+			'leftmenu' => 'survey_list_report',
+			'url' => '/core/customreports.php?objecttype='.urlencode('survey@alumni'),
+			'langs' => 'alumni@alumni',
+			'position' => 1004 + $r,
+			'enabled' => 'isModEnabled(\'alumni\')',
+			'perms' => '$user->hasRight(\'alumni\', \'survey\', \'write\')',
+			'target' => '',
+			'user' => 2,
+		);
 
 		/* END MODULEBUILDER LEFTMENU MYOBJECT */
 		// Exports profiles provided by this module
 		$r = 1;
 		/* BEGIN MODULEBUILDER EXPORT MYOBJECT */
 		$langs->load("alumni@alumni");
-		$this->export_code[$r]=$this->rights_class.'_'.$r;
-		$this->export_label[$r]='SurveyLines';	// Translation key (used only if key ExportDataset_xxx_z not found)
-		$this->export_icon[$r]='survey@alumni';
+
+		$this->export_code[$r] = $this->rights_class.'_'.$r;
+		$this->export_label[$r] = 'SurveyResults';	// Translation key (used only if key ExportDataset_xxx_z not found)
+		$this->export_icon[$r] = $this->picto;
 		// Define $this->export_fields_array, $this->export_TypeFields_array and $this->export_entities_array
 		$keyforclass = 'Survey'; $keyforclassfile='/alumni/class/survey.class.php'; $keyforelement='survey@alumni';
 		include DOL_DOCUMENT_ROOT.'/core/commonfieldsinexport.inc.php';
@@ -360,7 +374,7 @@ class modAlumni extends DolibarrModules
 		//$this->export_examplevalues_array[$r] = array('t.field'=>'Example');
 		//$this->export_help_array[$r] = array('t.field'=>'FieldDescHelp');
 		$this->export_sql_start[$r]='SELECT DISTINCT ';
-		$this->export_sql_end[$r]  =' FROM '.MAIN_DB_PREFIX.'survey as t';
+		$this->export_sql_end[$r]  =' FROM '.MAIN_DB_PREFIX.'alumni_survey as t';
 		//$this->export_sql_end[$r]  =' LEFT JOIN '.MAIN_DB_PREFIX.'survey_line as tl ON tl.fk_survey = t.rowid';
 		$this->export_sql_end[$r] .=' WHERE 1 = 1';
 		$this->export_sql_end[$r] .=' AND t.entity IN ('.getEntity('survey').')';
@@ -371,9 +385,9 @@ class modAlumni extends DolibarrModules
 		/* BEGIN MODULEBUILDER IMPORT MYOBJECT */
 		/*
 		$langs->load("alumni@alumni");
-		$this->import_code[$r]=$this->rights_class.'_'.$r;
-		$this->import_label[$r]='SurveyLines';	// Translation key (used only if key ExportDataset_xxx_z not found)
-		$this->import_icon[$r]='survey@alumni';
+		$this->import_code[$r] = $this->rights_class.'_'.$r;
+		$this->import_label[$r] = 'SurveyLines';	// Translation key (used only if key ExportDataset_xxx_z not found)
+		$this->import_icon[$r] = $this->picto;
 		$this->import_tables_array[$r] = array('t' => MAIN_DB_PREFIX.'alumni_survey', 'extra' => MAIN_DB_PREFIX.'alumni_survey_extrafields');
 		$this->import_tables_creator_array[$r] = array('t' => 'fk_user_author'); // Fields to store import user id
 		$import_sample = array();

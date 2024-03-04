@@ -9,7 +9,7 @@
  */
 
 include_once DOL_DOCUMENT_ROOT.'/core/modules/mailings/modules_mailings.php';
-//dol_include_once("/alumni/class/myobject.class.php");
+dol_include_once("/alumni/class/myobject.class.php");
 
 
 /**
@@ -20,7 +20,7 @@ class mailing_mailing_alumni_selector1 extends MailingTargets
 	// CHANGE THIS: Put here a name not already used
 	public $name = 'mailing_alumni_selector1';
 	// CHANGE THIS: Put here a description of your selector module
-	public $desc = 'List of alumni into the survey database';
+	public $desc = 'List of email from results of the survey';
 	// CHANGE THIS: Set to 1 if selector is available for admin users only
 	public $require_admin = 0;
 
@@ -59,20 +59,21 @@ class mailing_mailing_alumni_selector1 extends MailingTargets
 	public function formFilter()
 	{
 		global $langs;
-		$langs->load("members");
+		$langs->load("alumni@alumni");
 
-		$form = new Form($this->db);
-
-		$arraystatus = array(1=>'Option 1', 2=>'Option 2');
+		dol_include_once('/alumni/class/survey.class.php');
+		$tmp = new Survey($this->db);
+		$arrayfields = $tmp->fields['motivation']['arrayofkeyval'];
 
 		$s = '';
-		$s .= $langs->trans("Status").': ';
-		$s .= '<select name="filter" class="flat">';
+		$s .= $langs->trans($tmp->fields['motivation']['label']).': ';
+		$s .= '<select name="filter_motivation" id="filter_motivation" class="flat maxwidth200">';
 		$s .= '<option value="none">&nbsp;</option>';
-		foreach ($arraystatus as $status) {
-			$s .= '<option value="'.$status.'">'.$status.'</option>';
+		foreach ($arrayfields as $key => $val) {
+			$s .= '<option value="'.$key.'">'.$val.'</option>';
 		}
 		$s .= '</select>';
+		$s .= ajax_combobox('filter_motivation');
 		$s .= '<br>';
 
 		return $s;
@@ -87,7 +88,7 @@ class mailing_mailing_alumni_selector1 extends MailingTargets
 	 */
 	public function url($id)
 	{
-		return '<a href="'.dol_buildpath('/alumni/myobject_card.php', 1).'?id='.$id.'">'.img_object('', "generic").'</a>';
+		return '<a href="'.dol_buildpath('/alumni/survey_card.php', 1).'?id='.$id.'">'.img_object('', "generic").'</a>';
 	}
 
 
@@ -104,13 +105,16 @@ class mailing_mailing_alumni_selector1 extends MailingTargets
 		$target = array();
 		$j = 0;
 
-		$sql = " select rowid as id, label, firstname, lastname";
-		$sql .= " from ".MAIN_DB_PREFIX."myobject";
-		$sql .= " where email IS NOT NULL AND email <> ''";
-		if (GETPOSTISSET('filter') && GETPOST('filter', 'alphanohtml') != 'none') {
+		$sql = "SELECT asu.rowid as id, asu.firstname, asu.lastname, asu.email";
+		$sql .= " FROM ".MAIN_DB_PREFIX."alumni_survey as asu LEFT JOIN ".MAIN_DB_PREFIX."alumni_survey_extrafields as ase ON asu.rowid = ase.fk_object";
+		$sql .= " WHERE asu.email IS NOT NULL AND asu.email <> ''";
+		/*if (GETPOSTISSET('filter') && GETPOST('filter', 'alphanohtml') != 'none') {
 			$sql .= " AND status = '".$this->db->escape(GETPOST('filter', 'alphanohtml'))."'";
+		}*/
+		if (GETPOSTISSET('filter_motivation') && GETPOSTINT('filter_motivation') > 0) {
+			$sql .= " AND asu.motivation = ".((int) GETPOSTINT('filter_motivation'));
 		}
-		$sql .= " ORDER BY email";
+		$sql .= " ORDER BY asu.email";
 
 		// Store recipients in target
 		$result = $this->db->query($sql);
@@ -118,7 +122,7 @@ class mailing_mailing_alumni_selector1 extends MailingTargets
 			$num = $this->db->num_rows($result);
 			$i = 0;
 
-			dol_syslog("mailinglist_alumni_myobject.modules.php: mailing ".$num." targets found");
+			dol_syslog(__METHOD__.":add_to_target ".$num." targets found");
 
 			$old = '';
 			while ($i < $num) {
@@ -126,13 +130,13 @@ class mailing_mailing_alumni_selector1 extends MailingTargets
 				if ($old != $obj->email) {
 					$target[$j] = array(
 						'email' => $obj->email,
-						'name' => $obj->lastname,
 						'id' => $obj->id,
 						'firstname' => $obj->firstname,
-						'other' => $obj->label,
+						'lastname' => $obj->lastname,
+						//'other' => $obj->label,
 						'source_url' => $this->url($obj->id),
 						'source_id' => $obj->id,
-						'source_type' => 'myobject@alumni'
+						'source_type' => 'survey@alumni'
 					);
 					$old = $obj->email;
 					$j++;
@@ -169,7 +173,7 @@ class mailing_mailing_alumni_selector1 extends MailingTargets
 	 */
 	public function getSqlArrayForStats()
 	{
-		// CHANGE THIS: Optionnal
+		// CHANGE THIS: Optional
 
 		//var $statssql=array();
 		//$this->statssql[0]="SELECT field1 as label, count(distinct(email)) as nb FROM mytable WHERE email IS NOT NULL";
@@ -188,7 +192,9 @@ class mailing_mailing_alumni_selector1 extends MailingTargets
 	 */
 	public function getNbOfRecipients($sql = '')
 	{
-		$sql = "select count(distinct(email)) as nb from ".MAIN_DB_PREFIX."myobject as p where email IS NOT NULL AND email != ''";
+		$sql = "SELECT COUNT(DISTINCT(email)) as nb";
+		$sql .= " FROM ".MAIN_DB_PREFIX."alumni_survey as p";
+		$sql .= " WHERE email IS NOT NULL AND email <> ''";
 
 		$a = parent::getNbOfRecipients($sql);
 

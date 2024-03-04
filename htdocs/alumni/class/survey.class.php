@@ -117,16 +117,11 @@ class Survey extends CommonObject
 		"entity" => array("type"=>"integer", "label"=>"Entity", "enabled"=>"1", 'position'=>10, 'notnull'=>1, "visible"=>"0", "default"=>"1", "index"=>"1",),
 		"description" => array("type"=>"text", "label"=>"Description", "enabled"=>"1", 'position'=>60, 'notnull'=>0, "visible"=>"3", "validate"=>"1",),
 		"note_public" => array("type"=>"html", "label"=>"NotePublic", "enabled"=>"1", 'position'=>61, 'notnull'=>0, "visible"=>"0", "cssview"=>"wordbreak", "validate"=>"1",),
-		"note_private" => array("type"=>"html", "label"=>"NotePrivate", "enabled"=>"1", 'position'=>62, 'notnull'=>0, "visible"=>"0", "cssview"=>"wordbreak", "validate"=>"1",),
-		"date_creation" => array("type"=>"datetime", "label"=>"DateCreation", "enabled"=>"1", 'position'=>500, 'notnull'=>1, "visible"=>"-2",),
-		"tms" => array("type"=>"timestamp", "label"=>"DateModification", "enabled"=>"1", 'position'=>501, 'notnull'=>0, "visible"=>"-2",),
-		"fk_user_creat" => array("type"=>"integer:User:user/class/user.class.php", "label"=>"UserAuthor", "picto"=>"user", "enabled"=>"1", 'position'=>510, 'notnull'=>1, "visible"=>"-2", "csslist"=>"tdoverflowmax150",),
-		"fk_user_modif" => array("type"=>"integer:User:user/class/user.class.php", "label"=>"UserModif", "picto"=>"user", "enabled"=>"1", 'position'=>511, 'notnull'=>-1, "visible"=>"-2", "csslist"=>"tdoverflowmax150",),
-		"import_key" => array("type"=>"varchar(14)", "label"=>"ImportId", "enabled"=>"1", 'position'=>1000, 'notnull'=>-1, "visible"=>"-2",),
+		"note_private" => array("type"=>"html", "label"=>"Comment", "enabled"=>"1", 'position'=>62, 'notnull'=>0, "visible"=>-1, "cssview"=>"wordbreak", 'csslist'=>'twolinesmax small'),
 		"firstname" => array("type"=>"varchar(65)", "label"=>"Firstname", "enabled"=>"isModEnabled('alumni')", 'position'=>30, 'notnull'=>1, "visible"=>"1", "searchall"=>"1", "csslist"=>"tdoverflowmax150", "showoncombobox"=>"1",),
 		"lastname" => array("type"=>"varchar(64)", "label"=>"Lastname", "enabled"=>"isModEnabled('alumni')", 'position'=>30, 'notnull'=>1, "visible"=>"1", "index"=>"1", "searchall"=>"1", "csslist"=>"tdoverflowmax150", "showoncombobox"=>"1",),
 		"lastname2" => array("type"=>"varchar(128)", "label"=>"Lastname2", "enabled"=>"1", 'position'=>31, 'notnull'=>0, "visible"=>"1", "searchall"=>"1", "csslist"=>"tdoverflowmax150",),
-		"email" => array("type"=>"mail", "label"=>"Email", "enabled"=>"isModEnabled('alumni')", 'position'=>33, 'notnull'=>0, "visible"=>"1", "index"=>"1", "csslist"=>"tdoverflowmax150",),
+		"email" => array("type"=>"mail", "label"=>"Email", "enabled"=>"isModEnabled('alumni')", 'position'=>33, 'notnull'=>1, "visible"=>"1", "index"=>"1", "csslist"=>"tdoverflowmax150",),
 		"phone" => array("type"=>"phone", "label"=>"Phone", "enabled"=>"isModEnabled('alumni')", 'position'=>34, 'notnull'=>0, "visible"=>"1", "csslist"=>"tdoverflowmax150",),
 		"comwhatsapp" => array("type"=>"integer", "label"=>"ComWhatsapp", "enabled"=>"isModEnabled('alumni')", 'position'=>40, 'notnull'=>0, "visible"=>"-1",),
 		//"comemail" => array("type"=>"integer", "label"=>"ComEmail", "enabled"=>"isModEnabled('alumni')", 'position'=>41, 'notnull'=>0, "visible"=>"-1",),
@@ -135,16 +130,22 @@ class Survey extends CommonObject
 		"preferencejour" => array("type"=>"varchar(128)", "label"=>"PreferenceJour", "enabled"=>"isModEnabled('alumni')", 'position'=>51, 'notnull'=>0, "visible"=>"-1",),
 		"preferencemois" => array("type"=>"varchar(255)", "label"=>"PreferenceMois", "enabled"=>"isModEnabled('alumni')", 'position'=>52, 'notnull'=>0, "visible"=>"-1",),
 		"optionsur2jours" => array("type"=>"varchar(3)", "label"=>"Option sur 2 jours", "enabled"=>"isModEnabled('alumni')", 'position'=>54, 'notnull'=>0, "visible"=>"-1",),
-		"activiteassociees" => array("type"=>"varchar(128)", "label"=>"ActiviteAssociees", "enabled"=>"isModEnabled('alumni')", 'position'=>60, 'notnull'=>0, "visible"=>"-1",),
-		"activiteassocieesnat" => array("type"=>"varchar(128)", "label"=>"ActiviteAssocieesNature", "enabled"=>"isModEnabled('alumni')", 'position'=>61, 'notnull'=>0, "visible"=>"1",),
-		"prtorganiser" => array("type"=>"integer", "label"=>"Prêt à organiser", "enabled"=>"isModEnabled('alumni')", 'position'=>50, 'notnull'=>0, "visible"=>"1",),
-		"region" => array("type"=>"varchar(32)", "label"=>"Region", "enabled"=>"isModEnabled('alumni')", 'position'=>50, 'notnull'=>0, "visible"=>"-1",),
-		"choixperimetre" => array("type"=>"varchar(32)", "label"=>"ChoixPerimetre", "enabled"=>"isModEnabled('alumni')", 'position'=>54, 'notnull'=>0, "visible"=>"-1",),
-		"budgetmaxactivitepar" => array("type"=>"integer", "label"=>"BudgetMaxActiviteParPers", "enabled"=>"isModEnabled('alumni')", 'position'=>55, 'notnull'=>0, "visible"=>"-1",),
-		"budgetmaxrepasparpers" => array("type"=>"integer", "label"=>"BudgetMaxRepasParPers", "enabled"=>"isModEnabled('alumni')", 'position'=>55, 'notnull'=>0, "visible"=>"1",),
-		"lieu" => array("type"=>"varchar(24)", "label"=>"Lieu", "enabled"=>"isModEnabled('alumni')", 'position'=>50, 'notnull'=>0, "visible"=>"-1",),
-		"motivation" => array("type"=>"varchar(16)", "label"=>"Motivation", "enabled"=>"isModEnabled('alumni')", 'position'=>60, 'notnull'=>0, "visible"=>"1", 'csslist'=>'tdoverflowmax150 small', "arrayofkeyval"=>array("1" => "Pas du tout, je ne souhaite pas relier des liens avec l'ISEN, je suis passé a autre chose, probabilité de venir = 0%", "2" => "Intéressé mais des contraintes (éloignements, perso) m'empêcheront surement de venir, probabilité de venir < 5%", "3" => "Ca me fait ni chaud ni froid, probabilité de venir <25%", "4" => "Je suis intéressé, probabilité de venir entre 25 et 75%", "5" => "Je suis à fond, probabilité de venir > 75%"),),
-		"note_private" => array("type"=>"text", "label"=>"Comment", "enabled"=>"isModEnabled('alumni')", 'position'=>70, 'notnull'=>0, "visible"=>-1, 'csslist'=>'twolinesmax small'),
+		"activiteassociees" => array("type"=>"varchar(128)", "label"=>"ActiviteAssociees", "enabled"=>"isModEnabled('alumni')", 'position'=>60, 'notnull'=>0, "visible"=>"-1",), //, "arrayofkeyval"=>array("musee" => "Musée", "visiteusine" => "Visite usine", "baladenature" => "Balade nature", "autre" => "Autre")
+		"activiteassocieesnat" => array("type"=>"varchar(128)", "label"=>"ActiviteAssocieesNature", "enabled"=>"isModEnabled('alumni')", 'position'=>61, 'notnull'=>0, "visible"=>"1", "csslist"=>"tdoverflowmax150", "arrayofkeyval"=>array("justerepas" => "Juste repas", "repasspectacle" => "Repas spectacle", "activiterepas" => "Activité et repas")),
+		"prtorganiser" => array("type"=>"integer", "label"=>"Prêt à organiser", "enabled"=>"isModEnabled('alumni')", 'position'=>50, 'notnull'=>0, "visible"=>"1", "arrayofkeyval"=>array("0" => "Non", "1"=>"Oui")),
+		"lieu" => array("type"=>"varchar(24)", "label"=>"Lieu", "enabled"=>"isModEnabled('alumni')", 'position'=>70, 'notnull'=>0, "visible"=>"-1", "csslist"=>"tdoverflowmax150", "arrayofkeyval"=>array("lilleuniquement" => "Lille uniquement", "parisuniquement" => "Paris uniquement", "lilleparis" => "Lille sinon Paris", "parislille" => "Paris sinon Lille", "peuimporte" => "Peu importe")),
+		//"region" => array("type"=>"varchar(32)", "label"=>"Region", "enabled"=>"isModEnabled('alumni')", 'position'=>71, 'notnull'=>0, "visible"=>"-1",),
+		"choixperimetre" => array("type"=>"varchar(32)", "label"=>"ChoixPerimetre", "enabled"=>"isModEnabled('alumni')", 'position'=>80, 'notnull'=>0, "visible"=>"-1", "csslist"=>"tdoverflowmax150", "arrayofkeyval"=>array("alumniseul" => "Alumni seul", "avecconjoint" => "Avec conjoint", "peuimporte" => "Peu importe")),
+		"budgetmaxactivitepar" => array("type"=>"integer", "label"=>"BudgetMaxActiviteParPers", "enabled"=>"isModEnabled('alumni')", 'position'=>90, 'notnull'=>0, "visible"=>"-1",'isameasure'=>1),
+		"budgetmaxrepasparpers" => array("type"=>"integer", "label"=>"BudgetMaxRepasParPers", "enabled"=>"isModEnabled('alumni')", 'position'=>91, 'notnull'=>0, "visible"=>"1",'isameasure'=>1),
+		"motivation" => array("type"=>"varchar(16)", "label"=>"Motivation", "enabled"=>"isModEnabled('alumni')", 'position'=>100, 'notnull'=>0, "visible"=>"1", 'csslist'=>'tdoverflowmax150 small', "arrayofkeyval"=>array("1" => "Pas du tout, je ne souhaite pas relier des liens avec l'ISEN, je suis passé a autre chose, probabilité de venir = 0%", "5" => "Intéressé mais des contraintes (éloignements, perso) m'empêcheront surement de venir, probabilité de venir < 5%", "25" => "Ca me fait ni chaud ni froid, probabilité de venir <25%", "50" => "Je suis intéressé, probabilité de venir entre 25 et 75%", "75" => "Je suis à fond, probabilité de venir > 75%"),),
+		"date_creation" => array("type"=>"datetime", "label"=>"DateCreation", "enabled"=>"1", 'position'=>500, 'notnull'=>1, "visible"=>"-2",),
+		"tms" => array("type"=>"timestamp", "label"=>"DateModification", "enabled"=>"1", 'position'=>501, 'notnull'=>0, "visible"=>"-2",),
+		"fk_user_creat" => array("type"=>"integer:User:user/class/user.class.php", "label"=>"UserAuthor", "picto"=>"user", "enabled"=>"1", 'position'=>510, 'notnull'=>1, "visible"=>"-2", "csslist"=>"tdoverflowmax150",),
+		"fk_user_modif" => array("type"=>"integer:User:user/class/user.class.php", "label"=>"UserModif", "picto"=>"user", "enabled"=>"1", 'position'=>511, 'notnull'=>-1, "visible"=>"-2", "csslist"=>"tdoverflowmax150",),
+		"import_key" => array("type"=>"varchar(14)", "label"=>"ImportId", "enabled"=>"1", 'position'=>600, 'notnull'=>-1, "visible"=>"-2",),
+		"ip" => array("type"=>"ip", "label"=>"IP", "enabled"=>"isModEnabled('alumni')", 'position'=>610, 'notnull'=>0, "visible"=>"-1",),
+		"status" => array("type"=>"integer", "label"=>"Status", "enabled"=>"isModEnabled('alumni')", 'position'=>810, 'notnull'=>0, "default"=>0, "visible"=>"1", 'arrayofkeyval'=>array(0=>'Draft', 1=>'Validated', 9=>'Canceled')),
 	);
 	public $rowid;
 	public $entity;
@@ -177,6 +178,7 @@ class Survey extends CommonObject
 	public $budgetmaxrepasparpers;
 	public $lieu;
 	public $motivation;
+	public $ip;
 	// END MODULEBUILDER PROPERTIES
 
 
@@ -223,7 +225,7 @@ class Survey extends CommonObject
 	 */
 	public function __construct(DoliDB $db)
 	{
-		global $conf, $langs;
+		global $langs;
 
 		$this->db = $db;
 
@@ -447,14 +449,14 @@ class Survey extends CommonObject
 			foreach ($filter as $key => $value) {
 				if ($key == 't.rowid') {
 					$sqlwhere[] = $key." = ".((int) $value);
-				} elseif (in_array($this->fields[$key]['type'], array('date', 'datetime', 'timestamp'))) {
+				} elseif (array_key_exists($key, $this->fields) && in_array($this->fields[$key]['type'], array('date', 'datetime', 'timestamp'))) {
 					$sqlwhere[] = $key." = '".$this->db->idate($value)."'";
 				} elseif ($key == 'customsql') {
 					$sqlwhere[] = $value;	// For this case, $value never come from a user input but is a hard coded value in code
 				} elseif (strpos($value, '%') === false) {
 					$sqlwhere[] = $key." IN (".$this->db->sanitize($this->db->escape($value)).")";
 				} else {
-					$sqlwhere[] = $key." LIKE '%".$this->db->escapeforlike($this->db->escape($value))."%'";
+					$sqlwhere[] = $key." LIKE '%".$this->db->escape($this->db->escapeforlike($value))."%'";
 				}
 			}
 		}
@@ -547,7 +549,7 @@ class Survey extends CommonObject
 	 */
 	public function validate($user, $notrigger = 0)
 	{
-		global $conf, $langs;
+		global $conf;
 
 		require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
 
@@ -582,7 +584,10 @@ class Survey extends CommonObject
 		if (!empty($num)) {
 			// Validate
 			$sql = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
-			$sql .= " SET ref = '".$this->db->escape($num)."',";
+			$sql .= " SET ";
+			if (!empty($this->fields['ref'])) {
+				$sql .= " ref = '".$this->db->escape($num)."',";
+			}
 			$sql .= " status = ".self::STATUS_VALIDATED;
 			if (!empty($this->fields['date_validation'])) {
 				$sql .= ", date_validation = '".$this->db->idate($now)."'";
@@ -968,11 +973,11 @@ class Survey extends CommonObject
 			global $langs;
 			//$langs->load("alumni@alumni");
 			$this->labelStatus[self::STATUS_DRAFT] = $langs->transnoentitiesnoconv('Draft');
-			$this->labelStatus[self::STATUS_VALIDATED] = $langs->transnoentitiesnoconv('Enabled');
-			$this->labelStatus[self::STATUS_CANCELED] = $langs->transnoentitiesnoconv('Disabled');
+			$this->labelStatus[self::STATUS_VALIDATED] = $langs->transnoentitiesnoconv('Confirmed');
+			$this->labelStatus[self::STATUS_CANCELED] = $langs->transnoentitiesnoconv('Canceled');
 			$this->labelStatusShort[self::STATUS_DRAFT] = $langs->transnoentitiesnoconv('Draft');
-			$this->labelStatusShort[self::STATUS_VALIDATED] = $langs->transnoentitiesnoconv('Enabled');
-			$this->labelStatusShort[self::STATUS_CANCELED] = $langs->transnoentitiesnoconv('Disabled');
+			$this->labelStatusShort[self::STATUS_VALIDATED] = $langs->transnoentitiesnoconv('Confirmed');
+			$this->labelStatusShort[self::STATUS_CANCELED] = $langs->transnoentitiesnoconv('Canceled');
 		}
 
 		$statusType = 'status'.$status;

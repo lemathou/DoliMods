@@ -35,7 +35,8 @@ CREATE TABLE llx_alumni_survey(
 	comemail integer, 
 	promodesortie integer, 
 	lienavecpromo varchar(128), 
-	preferencejour varchar(128), 
+	preferencejour varchar(200), 
+	preferencemois varchar(255), 
 	optionsur2jours varchar(3), 
 	activiteassociees varchar(32), 
 	activiteassocieesnat varchar(32), 
@@ -45,6 +46,8 @@ CREATE TABLE llx_alumni_survey(
 	budgetmaxactivitepar integer, 
 	budgetmaxrepasparpers integer, 
 	lieu varchar(24), 
-	motivation varchar(16)
+	motivation varchar(16),
+	ip varchar(64),
+	status integer DEFAULT 0
 	-- END MODULEBUILDER FIELDS
 ) ENGINE=innodb;
