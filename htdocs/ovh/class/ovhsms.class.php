@@ -255,7 +255,7 @@ class OvhSms extends CommonObject
 							$object->actiontypecode	= $actiontypecode; // Type of event ('AC_OTH', 'AC_OTH_AUTO', 'AC_XXX'...)
 							$object->actionmsg2		= $langs->trans("SMSSentTo", $this->dest);
 							if (getDolGlobalInt('MMICRM_SMS_CLEAN_UNCIODE'))
-								$object->actionmsg		= $langs->trans("SMSSentTo", $this->dest)."\n".preg_replace('/[^\w\space;,!?:\.aàâäéèêëiïôöùûüç\/\'-]+/', '', str_replace('’', '\'', $this->message)).($this->nostop?'':"\n");
+								$object->actionmsg		= $langs->trans("SMSSentTo", $this->dest)."\n".mb_convert_encoding($this->message, 'UTF-8').($this->nostop?'':"\n");
 							else
 								$object->actionmsg		= $langs->trans("SMSSentTo", $this->dest)."\n".$this->message.($this->nostop?'':"\n");
 							//$object->trackid        = $trackid;
