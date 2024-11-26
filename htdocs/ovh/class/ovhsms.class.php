@@ -172,7 +172,7 @@ class OvhSms extends CommonObject
 	 *
 	 * @return	int     <=0 if error, >0 if OK
 	 */
-	function SmsSend()
+	function SmsSend($actiontypecode='AC_SMS')
 	{
 		global $db, $conf, $langs, $user;
 
@@ -208,7 +208,7 @@ class OvhSms extends CommonObject
 					"senderForResponse"=> false,
 					"validityPeriod"=> $this->validity    // 28800
 				);
-				//var_dump($content);exit;
+				var_dump($content);exit;
 				try {
 					//var_dump($content);
 					$resultPostJob = $this->conn->post('/sms/'. $this->account . '/jobs/', $content);
@@ -245,7 +245,7 @@ class OvhSms extends CommonObject
 							$langs->load("agenda");
 							$langs->load("other");
 
-							$actiontypecode='AC_OTH_AUTO'; // Event insert into agenda automatically
+							//$actiontypecode='AC_OTH_AUTO'; // Event insert into agenda automatically
 
 							$object->socid			= $this->socid;	   		// To link to a company
 							$object->contact_id     = $this->contact_id;
